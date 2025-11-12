@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bericht-Generator (Statisch • Dark)</title>
+  <style>
+    :root{
+      --bg:#0b0c0f; --card:#12151a; --muted:#9aa3b2; --text:#e6e9ef; --accent:#4f8cff; --bd:#2a3446; --dash:#334158; --err:#ff5a5a
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:var(--bg);color:var(--text)}
+    .wrap{max-width:760px;margin:auto;padding:20px}
+    h1{font-size:1.2rem;margin:0 0 12px}
+    label{display:block;margin:10px 0 6px;font-weight:600}
+    input,textarea,button,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;font-size:16px;background:#0f1420;color:var(--text)}
+    textarea{min-height:90px;resize:vertical}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .out{white-space:pre-wrap;background:#0f1420;border:1px dashed var(--dash);padding:12px;border-radius:10px;margin-top:12px}
+    .actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .btn{cursor:pointer}
+    .btn.primary{background:var(--accent);border-color:#3b6dd9}
+    .btn.ghost{background:transparent}
+    .muted{color:var(--muted);font-size:13px}
+    .err{border-color:var(--err)!important; outline:1px solid var(--err)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Bericht-Generator</h1>
+    <div class="row">
+      <div>
+        <label for="t">Techniker vor Ort</label>
+        <input id="t" type="number" min="1" value="1">
+      </div>
+      <div>
+        <label for="d">Datum</label>
+        <input id="d" type="date">
+      </div>
+    </div>
+
+    <label for="eq">Gebäude / Anlage / EQ</label>
+    <input id="eq" placeholder="z. B. Geb. 70 / EQ 17233">
+
+    <label for="f">Feststellung</label>
+    <textarea id="f" placeholder="Was wurde festgestellt?"></textarea>
+
+    <label for="u">Ursache</label>
+    <textarea id="u" placeholder="Vermutete/erkannte Ursache"></textarea>
+
+    <label for="a">Durchgeführte Arbeiten</label>
+    <textarea id="a" placeholder="Arbeitsschritte, Messungen, Tests"></textarea>
+
+    <label for="m">Material (ersetzt / bestellt)</label>
+    <textarea id="m" placeholder="Teil, Menge, Hersteller"></textarea>
+
+    <label for="s">Status</label>
+    <select id="s">
+      <option>Die Anlage ist wieder in Betrieb.</option>
+      <option>Provisorisch instandgesetzt; endgültige Reparatur nach Materialeingang.</option>
+      <option>Außer Betrieb; Ersatzteile bestellt.</option>
+    </select>
+
+    <label for="r">Zusätzliche Hinweise oder Empfehlungen</label>
+    <textarea id="r" placeholder="Weitere Beobachtungen oder Empfehlungen"></textarea>
+
+    <label for="e">Melder informieren</label>
+    <div class="actions">
+      <button class="btn" onclick="openMail()">📧 E-Mail an Melder senden</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" onclick="gen()">Bericht erstellen</button>
+      <button class="btn" onclick="copyOut()">Kopieren</button>
+      <button class="btn ghost" onclick="openCopilot()">➡️ Copilot öffnen</button>
+    </div>
+
+    <div id="out" class="out" hidden></div>
+    <p class="muted">Hinweis: Der Generator ist 100% statisch. Keine Agenten oder API-Aufrufe. Das Datum wird automatisch ausgefüllt.</p>
+  </div>
+
+  <script>
+    (function init(){
+      const d=document.getElementById('d');
+      if(d && !d.value){ d.value = new Date().toISOString().slice(0,10); }
+    })();
+
+    function $(id){return document.getElementById(id)}
+    function v(id){return ($(id)||{}).value ? $(id).value.trim() : ''}
+
+    const LABELS = { t:'Techniker vor Ort', d:'Datum', eq:'Gebäude/Anlage/EQ', f:'Feststellung', u:'Ursache', a:'Durchgeführte Arbeiten', m:'Material', s:'Status', r:'Zusätzliche Hinweise oder Empfehlungen' };
+
+    function validate(){
+      const required = ['t','d','eq','f','u','a','m','s'];
+      const missing = [];
+      required.forEach(id=>{
+        const el=$(id); if(!el) return;
+        let bad=false;
+        if(id==='t'){ bad = !(+el.value>0); }
+        else { bad = !v(id); }
+        el.classList.toggle('err', bad);
+        if(bad) missing.push(LABELS[id]||id);
+      });
+      if(missing.length){
+        alert('Bitte füllen Sie folgende Felder aus: '+missing.join(', '));
+        return false;
+      }
+      return true;
+    }
+
+    function gen(){
+      if(!validate()) return null;
+      const SEP = "\n\n";
+      const t = v('t');
+      const d = v('d');
+      const dateTxt = d ? new Date(d).toLocaleDateString('de-DE') : '';
+      const header = `${dateTxt}\n${t} Techniker vor Ort.`;
+      const parts = [ header, v('eq'), v('f'), v('u'), v('a'), v('m'), v('s') ];
+      const r = v('r');
+      if(r) parts.push(`Zusätzliche Hinweise oder Empfehlungen:\n${r}`);
+      const out = parts.join(SEP);
+      const box=$('out'); if(box){ box.textContent=out; box.hidden=false; }
+      return out;
+    }
+
+    function copyOut(){
+      const box=$('out');
+      if(!box) return;
+      if(box.hidden){ const txt = gen(); if(!txt) return; }
+      navigator.clipboard.writeText(box.textContent||'');
+      alert('Text kopiert.');
+    }
+
+    function openCopilot(){
+      const text = gen();
+      if(!text) return;
+      const url = 'https://m365.cloud.microsoft/chat/?fromCode=cmcv2&redirectId=C5E8DE61E1A8433EB2A0C4E720025753&internalredirect=CCM&auth=2';
+      navigator.clipboard.writeText(text||'');
+      window.open(url, '_blank');
+    }
+
+    function openMail(){
+      const subject = encodeURIComponent('Bericht / Rückmeldung');
+      const body = encodeURIComponent(gen() || '');
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    }
+  </script>
+</body>
+</html>
