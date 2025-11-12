@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "berichte-spfx-client-side-solution",
+    "id": "41f88b24-b6aa-4bb3-84f2-f7ed398762a2",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.21.1"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "berichte-spfx description"
+      },
+      "longDescription": {
+        "default": "berichte-spfx description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "berichte-spfx Feature",
+        "description": "The feature that activates elements of the berichte-spfx solution.",
+        "id": "5d432f94-2782-4c74-b4e5-ae2921716106",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/berichte-spfx.sppkg"
+  }
+}

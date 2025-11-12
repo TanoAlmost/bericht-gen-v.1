@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "berichte-gen-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/berichteGen/BerichteGenWebPart.js",
+          "manifest": "./src/webparts/berichteGen/BerichteGenWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "BerichteGenWebPartStrings": "lib/webparts/berichteGen/loc/{locale}.js"
+  }
+}
