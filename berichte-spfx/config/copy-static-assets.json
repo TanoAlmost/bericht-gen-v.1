@@ -1,0 +1,13 @@
+{
+  "includeExtensions": [
+    "html", "css", "js", "json", "ico",
+    "png", "jpg", "jpeg", "svg", "gif", "woff", "woff2", "ttf", "eot"
+  ],
+  "excludeExtensions": [],
+  "copySync": false,
+  "excludeFolderNames": [
+    "node_modules",
+    "temp",
+    "lib"
+  ]
+}
