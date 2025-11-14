@@ -5,17 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Bericht-Generator-v.1</title>
 
-  <!-- Favicon y logos (ahora apuntan a ./assets/) -->
-<link rel="icon" href="./favicon.ico?v=2">
-<link rel="shortcut icon" href="./favicon.ico?v=2">
-<link rel="icon" type="image/png" sizes="32x32" href="./assets/icon-32.png?v=2">
-<link rel="icon" type="image/png" sizes="16x16" href="./assets/icon-16.png?v=2">
+  <!-- Favicon y logos -->
+  <link rel="icon" href="./favicon.ico?v=2">
+  <link rel="shortcut icon" href="./favicon.ico?v=2">
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/icon-32.png?v=2">
+  <link rel="icon" type="image/png" sizes="16x16" href="./assets/icon-16.png?v=2">
 
   <!-- Icono para móviles / PWA -->
   <link rel="apple-touch-icon" sizes="192x192" href="./assets/icon-192.png">
- <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#0b0c0f">
-
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0b0c0f">
 
   <style>
     :root{
@@ -24,7 +23,7 @@
     *{box-sizing:border-box}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:var(--bg);color:var(--text)}
     .wrap{max-width:760px;margin:auto;padding:20px}
-    h1{font-size:1.2rem;margin:0 0 12px}
+    h1{font-size:1.2rem;margin:0 0 4px}
     label{display:block;margin:10px 0 6px;font-weight:600}
     input,textarea,button,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;font-size:16px;background:#0f1420;color:var(--text)}
     textarea{min-height:90px;resize:vertical}
@@ -40,12 +39,21 @@
 </head>
 <body>
   <div class="wrap">
-    <h1 style="display:flex;align-items:center;gap:10px;font-size:1.2rem;margin:0 0 12px;">
-  <img src="./berichte-spfx/src/webparts/berichteGen/assets/icon-32.png" alt="Logo" style="width:28px;height:28px;border-radius:6px;">
-  Bericht-Generator
-</h1>
-<h1>Bericht-Generator</h1>
-    <div class="row">
+    <!-- Título + logo -->
+    <h1 style="display:flex;align-items:center;gap:10px;font-size:1.2rem;margin:0 0 4px;">
+      <img src="./assets/icon-32.png" alt="Logo" style="width:28px;height:28px;border-radius:6px;">
+      Bericht-Generator
+    </h1>
+    <p id="modeInfo" class="muted" style="margin:0 0 12px;"></p>
+
+    <!-- Selector de tipo de Bericht -->
+    <label for="mode">Berichtsart</label>
+    <select id="mode">
+      <option value="stoerung">Störungsbericht</option>
+      <option value="instandsetzung">Instandsetzungsbericht</option>
+    </select>
+
+    <div class="row" style="margin-top:10px;">
       <div>
         <label for="t">Techniker vor Ort</label>
         <input id="t" type="number" min="1" value="1">
@@ -93,19 +101,98 @@
     </div>
 
     <div id="out" class="out" hidden></div>
-    <p class="muted">Hinweis: Der Generator ist 100% statisch. Keine Agenten oder API-Aufrufe. Das Datum wird automatisch ausgefüllt.</p>
+    <p class="muted">
+      Hinweis: Der Generator ist 100% statisch. Keine Agenten oder API-Aufrufe.
+      Das Datum wird automatisch ausgefüllt. Berichtsart: Störung oder Instandsetzung.
+    </p>
   </div>
 
   <script>
-    (function init(){
-      const d=document.getElementById('d');
-      if(d && !d.value){ d.value = new Date().toISOString().slice(0,10); }
-    })();
-
     function $(id){return document.getElementById(id)}
     function v(id){return ($(id)||{}).value ? $(id).value.trim() : ''}
 
-    const LABELS = { t:'Techniker vor Ort', d:'Datum', eq:'Gebäude/Anlage/EQ', f:'Feststellung', u:'Ursache', a:'Durchgeführte Arbeiten', m:'Material', s:'Status', r:'Zusätzliche Hinweise oder Empfehlungen' };
+    const MODE_CONFIG = {
+      stoerung: {
+        headline: 'Störungsbericht',
+        labels: {
+          f: 'Störungsbild / Feststellung',
+          u: 'Ursache (falls bekannt)',
+          a: 'Durchgeführte Arbeiten / Maßnahmen',
+          m: 'Material (ersetzt / bestellt)',
+          s: 'Status',
+          r: 'Zusätzliche Hinweise oder Empfehlungen'
+        },
+        placeholders: {
+          f: 'Störungsbild, Symptome, beobachtete Effekte',
+          u: 'Vermutete oder bekannte Ursache der Störung',
+          a: 'Akute Maßnahmen, Prüfungen, Tests',
+          m: 'Ersatzteile, provisorische Lösungen',
+          r: 'Empfehlungen, Beobachtungen, Risiken'
+        },
+        status: [
+          'Die Anlage ist wieder in Betrieb.',
+          'Provisorisch instandgesetzt; endgültige Reparatur nach Materialeingang.',
+          'Außer Betrieb; Ersatzteile bestellt.'
+        ]
+      },
+      instandsetzung: {
+        headline: 'Instandsetzungsbericht',
+        labels: {
+          f: 'Ausgangszustand / Mangelbeschreibung',
+          u: 'Ursache der Störung / des Mangels',
+          a: 'Durchgeführte Instandsetzungsarbeiten',
+          m: 'Verwendetes Material',
+          s: 'Status nach Instandsetzung',
+          r: 'Hinweise zur weiteren Wartung'
+        },
+        placeholders: {
+          f: 'Ausgangszustand der Anlage, Mangelbeschreibung',
+          u: 'Endgültige Ursache der Störung / des Mangels',
+          a: 'Instandsetzungsmaßnahmen, Austausch, Justage',
+          m: 'Material, Komponenten, Hersteller, Menge',
+          r: 'Wartungsintervalle, Empfehlungen, Restarbeiten'
+        },
+        status: [
+          'Instandsetzung abgeschlossen; Anlage in Betrieb.',
+          'Instandsetzung teilweise abgeschlossen; weitere Arbeiten erforderlich.',
+          'Instandsetzung geplant; Arbeiten noch nicht begonnen.'
+        ]
+      }
+    };
+
+    function applyMode(mode){
+      const cfg = MODE_CONFIG[mode] || MODE_CONFIG.stoerung;
+      const info = $('modeInfo');
+      if(info) info.textContent = cfg.headline;
+
+      // Labels
+      Object.keys(cfg.labels).forEach(id => {
+        const el = document.querySelector('label[for="'+id+'"]');
+        if(el) el.textContent = cfg.labels[id];
+      });
+
+      // Placeholders
+      Object.keys(cfg.placeholders).forEach(id => {
+        const el = $(id);
+        if(el && 'placeholder' in el) el.placeholder = cfg.placeholders[id];
+      });
+
+      // Status options
+      const s = $('s');
+      if(s && cfg.status){
+        s.innerHTML = '';
+        cfg.status.forEach(txt=>{
+          const opt = document.createElement('option');
+          opt.textContent = txt;
+          s.appendChild(opt);
+        });
+      }
+    }
+
+    function getLabelText(id){
+      const el = document.querySelector('label[for="'+id+'"]');
+      return el ? el.textContent.trim() : id;
+    }
 
     function validate(){
       const required = ['t','d','eq','f','u','a','m','s'];
@@ -116,7 +203,7 @@
         if(id==='t'){ bad = !(+el.value>0); }
         else { bad = !v(id); }
         el.classList.toggle('err', bad);
-        if(bad) missing.push(LABELS[id]||id);
+        if(bad) missing.push(getLabelText(id));
       });
       if(missing.length){
         alert('Bitte füllen Sie folgende Felder aus: '+missing.join(', '));
@@ -130,11 +217,16 @@
       const SEP = "\n\n";
       const t = v('t');
       const d = v('d');
+      const modeSel = $('mode');
+      const mode = modeSel ? modeSel.value : 'stoerung';
+      const typeTxt = mode === 'instandsetzung' ? 'Instandsetzungsbericht' : 'Störungsbericht';
       const dateTxt = d ? new Date(d).toLocaleDateString('de-DE') : '';
-      const header = `${dateTxt}\n${t} Techniker vor Ort.`;
+
+      const header = `${typeTxt}\n${dateTxt}\n${t} Techniker vor Ort.`;
       const parts = [ header, v('eq'), v('f'), v('u'), v('a'), v('m'), v('s') ];
       const r = v('r');
       if(r) parts.push(`Zusätzliche Hinweise oder Empfehlungen:\n${r}`);
+
       const out = parts.join(SEP);
       const box=$('out'); if(box){ box.textContent=out; box.hidden=false; }
       return out;
@@ -161,6 +253,18 @@
       const body = encodeURIComponent(gen() || '');
       window.location.href = `mailto:?subject=${subject}&body=${body}`;
     }
+
+    (function init(){
+      const d=document.getElementById('d');
+      if(d && !d.value){ d.value = new Date().toISOString().slice(0,10); }
+      const modeSel = $('mode');
+      if(modeSel){
+        applyMode(modeSel.value);
+        modeSel.addEventListener('change', function(){
+          applyMode(this.value);
+        });
+      }
+    })();
   </script>
 </body>
 </html>
